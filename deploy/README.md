@@ -18,6 +18,12 @@
 
 Cypht 只监听 `127.0.0.1:40050`，由 1Panel OpenResty 反代为 `https://mail.yiyongai.cn`。
 
+## 域名与证书
+
+- 站点配置：`/opt/1panel/www/conf.d/mail.yiyongai.cn.conf`（手写，不在 1Panel 网站列表中，不要再在 1Panel 里添加同名站点）
+- 证书：acme.sh（docker）HTTP 验证签发 Let's Encrypt，数据在 `/opt/acme-mail/data`
+- 续期：root crontab 每天 04:17 执行 `/opt/acme-mail/renew.sh`，证书变化时安装到 `/opt/1panel/www/sites/mail.yiyongai.cn/ssl/` 并 reload OpenResty
+
 ## GitHub Secrets
 
 `DEPLOY_HOST`、`DEPLOY_USER`、`DEPLOY_SSH_KEY`、`DEPLOY_KNOWN_HOSTS`。
