@@ -1,0 +1,39 @@
+# 生产部署：香港服务器 /opt/cypht
+# 镜像 tag 由 deploy.sh 写入同目录 .env 的 CYPHT_TAG；密码也在 .env 中（不入库）
+
+services:
+  db:
+    image: mariadb:10
+    restart: unless-stopped
+    volumes:
+      - ./data/mysql:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
+      - MYSQL_DATABASE=cypht
+      - MYSQL_USER=cypht
+      - MYSQL_PASSWORD=${DB_PASSWORD}
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  cypht:
+    image: ghcr.io/openx123/cypht:${CYPHT_TAG:-latest}
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:40050:80" # 只对本机开放，由 OpenResty 反代
+    env_file:
+      - ./cypht.env
+    environment:
+      - AUTH_USERNAME=admin
+      - AUTH_PASSWORD=${ADMIN_PASSWORD}
+    volumes:
+      - ./data/attachments:/var/lib/hm3/attachments
+      - ./data/log/nginx:/var/log/nginx
+      - ./data/log/php:/var/log/php
+      - ./data/log/supervisord:/var/log/supervisord
+      - ./data/fonts:/usr/local/share/cypht/site/fonts
